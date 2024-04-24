@@ -6,6 +6,19 @@
 #include <unistd.h>
 #include <thread>
 #include <string>
+#include <algorithm>
+
+/*
+ * SimpleChat (formerly booger)
+ * 
+ * its a garbage chat program so i can learn c++ networking and networking in general
+ * only supports 2 users for now
+ * probably a memory leak somewhere bc i have no idea what im doing
+ * 
+ * no comments for now thats a problem for future me
+ * 
+ * https://github.com/zebogan/SimpleChat
+ */
 
 void recieveStuff(int new_sock);
 void sendStuff(int new_sock);
@@ -47,7 +60,7 @@ int main() {
         perror("listen");
         return 1;
     }
-    std::cout << "listne done\n";
+    std::cout << "listen done\n";
 
     addr_size = sizeof their_addr;
     new_fd = accept(sock, (struct sockaddr *)&their_addr, &addr_size);
@@ -74,21 +87,30 @@ int main() {
 }
 
 void sendStuff(int new_sock) {
-    char *msg;
     std::string userInput;
-    int len, bytes_sent;
+    int bytes_sent;
 
     while (going) {
-        std::getline(std::cin, userInput);
-        userInput += '\n';
-        msg = (char*)userInput.c_str();
-        len = strlen(msg);
-        bytes_sent = send(new_sock, msg, len, 0);
-        if (bytes_sent == -1) {
-            std::cout << strerror(errno);
-            return;
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+        int ready = select(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout);
+
+        if (ready > 0 && FD_ISSET(STDIN_FILENO, &read_fds)) {
+            std::getline(std::cin, userInput);
+            userInput += '\n';
+            const char* msg = userInput.c_str();
+            int len = strlen(msg);
+            bytes_sent = send(new_sock, msg, len, 0);
+            if (bytes_sent == -1) {
+                std::cout << strerror(errno);
+                return;
+            }
         }
-        if (strstr(msg, "exit") != NULL) {
+        if (userInput.find("exit") != std::string::npos) {
             going = false;
         }
     }
