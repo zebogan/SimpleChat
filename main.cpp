@@ -18,14 +18,20 @@
  * no comments for now thats a problem for future me
  * 
  * https://github.com/zebogan/SimpleChat
+ * 
+ * thanks to https://beej.us/guide/bgnet/html/split-wide/system-calls-or-bust.html
+ * also chatgpt and random stack overflow posts
+ * professional programmer™
  */
 
 void recieveStuff(int new_sock);
 void sendStuff(int new_sock);
 
+// "global variables are bad coding practice" -🤓
 bool going = true;
 
 int main() {
+    //variable declaration 🤯
     int sock, new_fd;
     struct sockaddr_storage their_addr;
     socklen_t addr_size;
